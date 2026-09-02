@@ -313,7 +313,7 @@ Agent 经常被描述为“自主系统”，但工程实践中自主程度应�
 
 ## 十三、延伸阅读
 
-- Hello-Agents 在线教程：https://hello-agents.datawhale.cc/
-- Hello-Agents GitHub：https://github.com/datawhalechina/hello-agents
+- [Hello-Agents 在线教程](https://hello-agents.datawhale.cc/)
+- [Hello-Agents GitHub](https://github.com/datawhalechina/hello-agents)
 
 阅读延伸材料时，先关注基本概念和案例，不必在第一课深入 Transformer、RAG、MCP 或多智能体协议。这些内容会在后续课时逐步展开。
