@@ -2,6 +2,8 @@
 
 > 适合角色：银行 AI 平台项目经理；建议用时：90～120 分钟。前置知识：能够区分规则、Workflow、LLM 应用与 Agent。本课重点：理解 ReAct 循环，以及如何把工具调用限制在可控边界内。
 
+> 学习状态：**已完成**；完成日期：2026-09-04。验收结果：能够解释 ReAct 循环，设计受控工具及失败处理，并理解停止条件、人工接管和 Agent Loop 的平台控制职责。
+
 ## 资料来源与改编说明
 
 本课以 Datawhale Hello-Agents [第四章《智能体经典范式构建》](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter4/%E7%AC%AC%E5%9B%9B%E7%AB%A0%20%E6%99%BA%E8%83%BD%E4%BD%93%E7%BB%8F%E5%85%B8%E8%8C%83%E5%BC%8F%E6%9E%84%E5%BB%BA.md)为主线。原教程介绍了 ReAct、Plan-and-Solve 和 Reflection 三种经典范式，并通过 LLM 客户端、工具执行器和 Agent 循环展示其实现方式。
@@ -382,11 +384,11 @@ def run_agent(goal, tools, max_steps=8):
 
 ## 十七、本课验收标准
 
-- [ ] 能解释 ReAct 循环。
-- [ ] 能区分 Action 和 Observation。
-- [ ] 能说明模型为什么不能绕过工具网关权限。
-- [ ] 能为工具失败设计有限重试和降级。
-- [ ] 能给出明确的停止与人工接管条件。
-- [ ] 能看懂 Agent Loop 概念代码的主要结构。
+- [x] 能解释 ReAct 循环。
+- [x] 能区分 Action 和 Observation。
+- [x] 能说明模型为什么不能绕过工具网关权限。
+- [x] 能为工具失败设计有限重试和降级。
+- [x] 能给出明确的停止与人工接管条件。
+- [x] 能看懂 Agent Loop 概念代码的主要结构。
 
 本课完成后，再进入 Plan-and-Solve 与 Reflection，不要求在一次学习中掌握三种范式。
