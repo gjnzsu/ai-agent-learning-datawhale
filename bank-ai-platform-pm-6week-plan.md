@@ -222,6 +222,7 @@
 - [x] 第一周第一课“LLM、Workflow 与 Agent 的区别”（2026-09-01 完成）
 - [x] 第一周第二课“银行场景筛选与 Agent 适用性判断”（2026-09-02 完成）
 - [x] 第二周第一课“ReAct 与受控工具调用”（2026-09-04 完成）
-- [ ] 第二周第二课“Plan-and-Solve 与 Reflection”
+- [x] 第二周第二课“Plan-and-Solve 与 Reflection”（2026-09-06 完成）
+- [ ] 第二周第三课“Human-in-the-loop 与执行治理”
 
-第二周第一课已经通过验收，下一步学习 Plan-and-Solve 与 Reflection。
+第二周第二课已经通过验收，下一步学习 Human-in-the-loop 与执行治理。

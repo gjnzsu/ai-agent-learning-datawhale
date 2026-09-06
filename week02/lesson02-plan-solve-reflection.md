@@ -2,6 +2,8 @@
 
 > 适合角色：银行 AI 平台项目经理；建议用时：90～120 分钟。前置知识：理解 ReAct 与受控工具调用。本课重点：掌握“先规划后执行”和“生成后评审修正”两种范式，并判断它们在银行场景中的适用边界。
 
+> 学习状态：**已完成**；完成日期：2026-09-06。验收结果：能够解释 Plan-and-Solve 与 Reflection 的运行方式，理解重规划、混合评审和执行权限边界，并能比较三种经典 Agent 范式。
+
 ## 资料来源与改编说明
 
 本课以 Datawhale Hello-Agents [第四章《智能体经典范式构建》](https://github.com/datawhalechina/hello-agents/blob/main/docs/chapter4/%E7%AC%AC%E5%9B%9B%E7%AB%A0%20%E6%99%BA%E8%83%BD%E4%BD%93%E7%BB%8F%E5%85%B8%E8%8C%83%E5%BC%8F%E6%9E%84%E5%BB%BA.md)中的 Plan-and-Solve 与 Reflection 为主线。原教程将 Plan-and-Solve 概括为规划和执行两个阶段，将 Reflection 概括为执行、反思和优化的迭代过程。
@@ -496,12 +498,12 @@ Auditor 作出最终决定
 
 ## 二十一、本课验收标准
 
-- [ ] 能解释 Plan 与 Solve 的职责差异。
-- [ ] 能说明计划为什么不等于执行权限。
-- [ ] 能给出至少两个动态重规划触发条件。
-- [ ] 能解释 Execute、Review 和 Refine 循环。
-- [ ] 能说明 LLM 自我反思为什么不等于事实核验。
-- [ ] 能为 Reflection 设计评审标准和停止条件。
-- [ ] 能比较并选择三种经典范式。
+- [x] 能解释 Plan 与 Solve 的职责差异。
+- [x] 能说明计划为什么不等于执行权限。
+- [x] 能给出至少两个动态重规划触发条件。
+- [x] 能解释 Execute、Review 和 Refine 循环。
+- [x] 能说明 LLM 自我反思为什么不等于事实核验。
+- [x] 能为 Reflection 设计评审标准和停止条件。
+- [x] 能比较并选择三种经典范式。
 
 本课完成后，将进入第二周第三课：Human-in-the-loop 与执行治理。
