@@ -11,6 +11,7 @@
 - [第一周第二课：银行 AI 场景筛选与 Agent 适用性判断](./week01/lesson02-bank-ai-scenario-selection.md)
 - [第二周第一课：ReAct 与受控工具调用](./week02/lesson01-react-and-controlled-tools.md)
 - [第二周第二课：Plan-and-Solve 与 Reflection](./week02/lesson02-plan-solve-reflection.md)
+- [第二周第三课：Human-in-the-loop 与执行治理](./week02/lesson03-human-in-the-loop-execution-governance.md)
 
 ## 当前进度
 
@@ -21,6 +22,6 @@
 - [x] 第一周第二课：银行 AI 场景筛选与 Agent 适用性判断（2026-09-02 完成）
 - [x] 第二周第一课：ReAct 与受控工具调用（2026-09-04 完成）
 - [x] 第二周第二课：Plan-and-Solve 与 Reflection（2026-09-06 完成）
-- [ ] 第二周第三课：Human-in-the-loop 与执行治理
+- [x] 第二周第三课：Human-in-the-loop 与执行治理（2026-09-06 完成）
 
 后续学习讲义、练习记录和 PoC 将持续更新。
