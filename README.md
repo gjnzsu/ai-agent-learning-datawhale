@@ -15,6 +15,7 @@
 - [第三周第一课：银行 Agent 平台分层与核心组件](./week03/lesson01-platform-layers-and-core-components.md)
 - [第三周第二课：可靠性、发布管理与可观测性](./week03/lesson02-reliability-release-observability.md)
 - [第三周第三课：框架选型与 Java/Python 集成](./week03/lesson03-framework-selection-java-python-integration.md)
+- [第四周第一课：银行制度 RAG 与知识治理](./week04/lesson01-rag-and-knowledge-governance.md)
 
 ## 当前进度
 
@@ -29,5 +30,6 @@
 - [x] 第三周第一课：银行 Agent 平台分层与核心组件（2026-09-08 完成）
 - [x] 第三周第二课：可靠性、发布管理与可观测性（2026-09-09 完成）
 - [x] 第三周第三课：框架选型与 Java/Python 集成（2026-09-10 完成）
+- [x] 第四周第一课：银行制度 RAG 与知识治理（2026-09-10 完成）
 
 后续学习讲义、练习记录和 PoC 将持续更新。
