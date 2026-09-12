@@ -331,7 +331,85 @@ Agent Card 用于描述一个 Agent 的名称、能力、技能、服务端点�
 
 不要只依赖自然语言“完成了”。平台应读取结构化任务状态，并验证 Artifact 是否存在、Schema 是否正确、来源是否可信。
 
-### 7.3 为什么 A2A 不只是普通 API
+### 7.3 MCP Message Schema 与 A2A Message 的区别
+
+MCP 和 A2A 都使用了“Message”这个词，但两者通常处于不同的抽象层级。
+
+MCP 基础协议中的 Message 是 JSON-RPC 协议报文，分为 Request、Response 和 Notification。它描述 Client 与 Server 如何发起操作、关联响应或发送通知。例如：
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 101,
+  "method": "tools/call",
+  "params": {
+    "name": "get_aml_report",
+    "arguments": {
+      "customer_id": "C001"
+    }
+  }
+}
+```
+
+这里的核心是 `method`、`params` 和请求 `id`，类似 RPC 的请求信封。
+
+A2A 的 Message 则是业务语义对象，表示 Client Agent 与 Remote Agent 之间的一轮交流：
+
+```json
+{
+  "role": "ROLE_USER",
+  "messageId": "msg-001",
+  "parts": [
+    {
+      "text": "请检查客户 C001 的申请材料是否存在伪造迹象"
+    }
+  ]
+}
+```
+
+这里的核心是发送方 `role` 和内容 `parts`；内容可以是文本、文件或结构化数据，并可关联 A2A Task。
+
+| 对比维度 | MCP 基础协议 Message | A2A Message |
+|---|---|---|
+| 抽象层级 | 协议传输层 | Agent 业务语义层 |
+| 通信对象 | MCP Client 与 Server | Client Agent 与 Remote Agent |
+| 主要作用 | 调用方法、返回结果或发送通知 | 表达一次对话、请求或任务信息 |
+| 核心字段 | `id`、`method`、`params`、`result` | `role`、`messageId`、`parts` |
+| 生命周期 | 通常围绕一次请求与响应 | 可属于多轮交互或长期 Task |
+
+可以这样记忆：
+
+```text
+MCP Message：机器怎样调用能力
+A2A Message：Agent 之间交流什么
+```
+
+A2A 也可以使用 JSON-RPC 作为传输绑定，所以两者甚至可以嵌套：
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 201,
+  "method": "SendMessage",
+  "params": {
+    "message": {
+      "role": "ROLE_USER",
+      "messageId": "msg-001",
+      "parts": [
+        {
+          "text": "请检查这份 KYC 材料是否存在伪造迹象"
+        }
+      ]
+    }
+  }
+}
+```
+
+此时外层是 JSON-RPC 调用报文，内层 `params.message` 才是 A2A 的语义 Message。
+
+另外，MCP Sampling 等功能中也存在带 `role` 和 `content` 的消息内容结构，但它服务于 MCP Client 与 Server 之间的模型生成协作，并不具备 A2A 的 Agent 委派、Task 生命周期和 Artifact 语义。阅读文档时应先确认“Message”属于哪一层、由谁发送给谁。
+
+### 7.4 为什么 A2A 不只是普通 API
 
 普通 API 常常是同步、确定性函数调用；Agent 任务可能：
 
