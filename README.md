@@ -18,6 +18,7 @@
 - [第四周第一课：银行制度 RAG 与知识治理](./week04/lesson01-rag-and-knowledge-governance.md)
 - [第四周第二课：记忆、上下文与跨会话隔离](./week04/lesson02-memory-context-isolation.md)
 - [第四周第三课：MCP、A2A、ANP 与身份传递](./week04/lesson03-protocols-and-identity-propagation.md)
+- [第五周第一课：银行 Agent 评估框架](./week05/lesson01-agent-evaluation-framework.md)
 
 ## 当前进度
 
@@ -35,5 +36,6 @@
 - [x] 第四周第一课：银行制度 RAG 与知识治理（2026-09-10 完成）
 - [x] 第四周第二课：记忆、上下文与跨会话隔离（2026-09-11 完成）
 - [x] 第四周第三课：MCP、A2A、ANP 与身份传递（2026-09-12 完成）
+- [ ] 第五周第一课：银行 Agent 评估框架
 
 后续学习讲义、练习记录和 PoC 将持续更新。
