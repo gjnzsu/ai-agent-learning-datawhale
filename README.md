@@ -22,11 +22,12 @@
 
 ## 核心成果 Artifacts
 
-以下成果物从学习讲义中提炼，用于方案评审、PoC 设计和面试展示；当前为 v0.1，完成第五周后将继续补充评估指标、安全 Hard Gate 和上线准入要求。
+以下成果物从学习讲义中提炼，用于方案评审、PoC 设计和面试展示；当前为 v0.2，已加入第五周第一课的评估指标、Hard Gate、Scorecard 和上线准入逻辑；可执行评估集将在 PoC 阶段补充。
 
 - [银行 Agent 场景评估](./artifacts/01-agent-use-case-assessment.md)
 - [Tool 与 Human-in-the-loop 控制矩阵](./artifacts/02-tool-and-hitl-control-matrix.md)
 - [银行 Agent 平台逻辑架构](./artifacts/03-agent-platform-architecture.md)
+- [Payment Investigation Agent Evaluation Scorecard](./artifacts/04-agent-evaluation-scorecard.md)
 
 ## 当前进度
 
