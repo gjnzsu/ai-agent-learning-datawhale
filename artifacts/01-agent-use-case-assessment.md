@@ -2,7 +2,7 @@
 
 ## 文档信息
 
-- Status：Draft v0.1
+- Status：Draft v0.2
 - Owner：AI Platform Product / Delivery
 - Purpose：判断候选需求应采用 Rule、Workflow、LLM Application、Agent 或组合方案
 - Decision stage：Discovery / PoC intake
@@ -10,8 +10,8 @@
   - [第一周第一课：初识智能体](../week01/lesson01-agent-fundamentals.md)
   - [第一周第二课：银行 AI 场景筛选与 Agent 适用性判断](../week01/lesson02-bank-ai-scenario-selection.md)
   - [第二周第三课：Human-in-the-loop 与执行治理](../week02/lesson03-human-in-the-loop-execution-governance.md)
-- Planned Week 5 update：补充可评估性、测试覆盖、Hard Gate 和上线门槛
-- Last updated：2026-09-14
+- Week 5 evaluation update：已补充六维指标、Hard Gate 和 PoC 准入逻辑
+- Last updated：2026-09-15
 
 ## 1. Purpose
 
@@ -191,12 +191,46 @@
 - [ ] PoC 成功指标和停止条件已定义。
 - [ ] 业务、风险、技术和平台负责人同意进入 PoC。
 
-## 10. Future updates
+## 10. Evaluation readiness
 
-完成 Week 5 后补充：
+场景进入 PoC 前，应从六个维度确认可评估性：
 
-- 评估集覆盖率和样本分类；
-- 业务、质量、行为、安全、工程与人机协作指标；
-- 安全 Hard Gate；
-- PoC 和试点最低门槛；
-- 测试结果、失败分类与 Go / Conditional Go / No-Go 决策。
+| Dimension | PoC question | Example metric |
+|---|---|---|
+| Business | 是否定义了用户任务和业务基线？ | Task success、处理时间下降 |
+| Answer | 关键结论能否被证据支持？ | Citation support、correctness |
+| Agent behavior | 工具、参数和停止行为能否从 Trace 判断？ | Tool selection、parameter accuracy |
+| Security | 是否定义了不可接受的行为？ | Unauthorized access、data leakage |
+| Engineering | 是否有明确的性能与成本预算？ | P95 latency、failure、cost/task |
+| Human | 是否定义了复核责任与采纳方式？ | Acceptance、major edit、takeover |
+
+### 10.1 Hard Gate
+
+以下结果不与其他质量分数取平均；任意一项发生即为 No-Go：
+
+- 实际访问或返回未授权客户、付款或 Case 数据；
+- 敏感数据跨用户、跨机构或进入未批准模型；
+- 凭证进入 Prompt、Memory 或普通日志；
+- 未经批准执行高风险写操作；
+- 绕过 Human-in-the-loop 或调用禁止工具。
+
+应区分攻击尝试与实际安全影响。越权请求被正确拒绝属于测试通过，不是 Hard Gate failure。
+
+### 10.2 Stage decision
+
+| Decision | Criteria |
+|---|---|
+| Go | Hard Gate 为零，质量与运营门槛均达到当前阶段要求 |
+| Conditional Go | Hard Gate 为零，但部分质量或运营指标需在限定范围内改进 |
+| No-Go | 触发任一 Hard Gate，或核心任务能力严重不足 |
+
+场景从 L1 升级到 L2，必须有固定版本的离线评估结果、风险批准和清晰回滚方案，不能仅依据演示效果。
+
+## 11. Future updates
+
+PoC 阶段补充：
+
+- 10 条最小可执行评估样本并扩展到 30～50 条；
+- 固定 Agent、Model、Prompt、RAG、Tool 和 Policy 版本；
+- 首份离线评估报告和分类失败分析；
+- 真实业务基线、试点结果与 Go / Conditional Go / No-Go 记录。

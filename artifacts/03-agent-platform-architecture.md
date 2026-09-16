@@ -2,7 +2,7 @@
 
 ## 文档信息
 
-- Status：Draft v0.1
+- Status：Draft v0.2
 - Owner：AI Platform Product / Delivery
 - Purpose：定义银行 Agent 平台的逻辑分层、组件职责、请求路径和治理边界
 - Decision stage：Architecture discovery / PoC design
@@ -13,8 +13,8 @@
   - [第四周第一课：银行制度 RAG 与知识治理](../week04/lesson01-rag-and-knowledge-governance.md)
   - [第四周第二课：记忆、上下文与跨会话隔离](../week04/lesson02-memory-context-isolation.md)
   - [第四周第三课：MCP、A2A、ANP 与身份传递](../week04/lesson03-protocols-and-identity-propagation.md)
-- Planned Week 5 update：补充 Evaluation Service、上线门禁、红队测试和运营指标
-- Last updated：2026-09-14
+- Week 5 evaluation update：已补充 Evaluation Service、回归与 Release Gate
+- Last updated：2026-09-15
 
 ## 1. Purpose
 
@@ -219,7 +219,7 @@ Memory 必须按用户、机构、应用和环境隔离，设置用途、保留�
 - Model/Prompt/RAG/Tool/Policy 版本关联；
 - 离线评估、回归比较和上线门禁。
 
-Week 5 完成后，本节将补充详细评估架构和 Hard Gate。
+详细评估门槛与 Scorecard 见 [Artifact 04](./04-agent-evaluation-scorecard.md)。
 
 ## 6. End-to-end request flow
 
@@ -354,13 +354,89 @@ request_id
 - [ ] Java/Python 接口具有版本化 Schema 和错误契约。
 - [ ] 架构可支持离线评估、灰度和持续运营。
 
-## 13. Future updates
+## 13. Evaluation and release architecture
 
-完成 Week 5 后补充：
+```mermaid
+flowchart TD
+    D["Evaluation Dataset"] --> RUN["Evaluation Runner"]
+    REG["Version Registry"] --> RUN
+    RUN --> AG["Agent under Test"]
+    AG --> TRACE["Trace & Results"]
+    TRACE --> RULE["Rules & Hard Gates"]
+    TRACE --> JUDGE["LLM Judge"]
+    TRACE --> HUMAN["Human Review"]
+    RULE --> SCORE["Evaluation Scorecard"]
+    JUDGE --> SCORE
+    HUMAN --> SCORE
+    SCORE --> GATE["Release Gate"]
+    GATE -->|"Go"| PILOT["Controlled Pilot"]
+    GATE -->|"Conditional"| FIX["Fix & Retest"]
+    GATE -->|"No-Go"| BLOCK["Block Release"]
+    PILOT --> FEED["Online Feedback"]
+    FEED --> D
+```
 
-- Evaluation Service 的数据流和职责；
-- 离线评估集、LLM Judge 和人工评审的位置；
-- Prompt Injection、工具投毒和数据泄漏测试；
-- Hard Gate 与 release pipeline 的关系；
-- Model/Prompt/RAG/Tool 版本对比；
-- 线上漂移、反馈回流和准入/回滚阈值。
+### 13.1 Evaluation Service responsibilities
+
+- 管理数据集、样本类别、风险等级和版本；
+- 固定 Agent、Model、Prompt、RAG、Tool 和 Policy 版本；
+- 在隔离环境运行任务并保存结构化 Trace；
+- 执行 Rule、Schema、Programmatic 和 Hard Gate 检查；
+- 调用版本化 LLM Judge Rubric；
+- 支持人工抽样、争议处理和 Judge 校准；
+- 生成六维 Scorecard、版本差异和分类失败报告；
+- 将线上新失败模式回流为回归样本。
+
+### 13.2 Scoring path
+
+```text
+Hard Gate checks
+├─ Fail → No-Go
+└─ Pass
+   ↓
+Quality thresholds
+├─ Below threshold → Conditional Go / Fix and Retest
+└─ Pass
+   ↓
+Operational readiness
+├─ Not ready → Limited Pilot
+└─ Ready → Go
+```
+
+权限、泄漏和审批边界必须使用确定性控制。LLM Judge 适合完整性、清晰度、证据一致性和版本偏好比较，但不单独决定安全准入。
+
+### 13.3 Version and regression contract
+
+每份报告至少绑定：
+
+- Agent application/version；
+- Model provider/version；
+- System Prompt/version；
+- RAG snapshot、Embedding 和 Reranker；
+- Tool/MCP Server 与 Schema；
+- Policy、Guardrail 和 HITL workflow；
+- Evaluation dataset/version；
+- Judge model、Prompt 和 Rubric；
+- execution environment/date。
+
+任何关键版本变化都应运行固定 regression set。平均任务成功率上升不能掩盖某一高风险类别回归。
+
+### 13.4 Release Gate integration
+
+| Stage | Evidence required |
+|---|---|
+| Development | 组件测试、Schema、Policy 和基本 Trace |
+| PoC | 最小离线评估集、六维 Scorecard、Hard Gate 为零 |
+| Pilot | 扩展评估集、风险批准、监控、HITL、回滚和 Kill Switch |
+| Production | 正式 SLO、持续评估、事件响应、漂移和版本治理 |
+
+## 14. Future updates
+
+完成第五周安全与红队测试后补充：
+
+- Prompt Injection、工具投毒、数据泄漏和审批绕过的测试模型；
+- Red-team findings、严重度和处置流程；
+- 安全测试与 Release Gate 的责任人；
+- 线上漂移、告警、回退和紧急停用阈值。
+
+PoC 阶段再补充可执行评估集、首次运行结果和真实回归报告。
