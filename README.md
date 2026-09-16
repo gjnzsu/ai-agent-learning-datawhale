@@ -19,6 +19,7 @@
 - [第四周第二课：记忆、上下文与跨会话隔离](./week04/lesson02-memory-context-isolation.md)
 - [第四周第三课：MCP、A2A、ANP 与身份传递](./week04/lesson03-protocols-and-identity-propagation.md)
 - [第五周第一课：银行 Agent 评估框架](./week05/lesson01-agent-evaluation-framework.md)
+- [第五周第二课：Agent 安全与红队测试](./week05/lesson02-agent-security-red-team-testing.md)
 
 ## 核心成果 Artifacts
 
@@ -45,5 +46,6 @@
 - [x] 第四周第二课：记忆、上下文与跨会话隔离（2026-09-11 完成）
 - [x] 第四周第三课：MCP、A2A、ANP 与身份传递（2026-09-12 完成）
 - [x] 第五周第一课：银行 Agent 评估框架（2026-09-14 完成；评估集实践延期至 PoC）
+- [ ] 第五周第二课：Agent 安全与红队测试
 
 后续学习讲义、练习记录和 PoC 将持续更新。
