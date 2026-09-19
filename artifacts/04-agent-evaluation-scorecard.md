@@ -2,16 +2,19 @@
 
 ## 文档信息
 
-- Status：Draft v0.1
+- Status：Draft v0.2
 - Owner：AI Platform Product / Delivery
 - Purpose：定义 Payment Investigation Agent 的 PoC 评估指标、评分方法和准入门槛
 - Decision stage：PoC acceptance / Pilot readiness
-- Source lesson：[第五周第一课：银行 Agent 评估框架](../week05/lesson01-agent-evaluation-framework.md)
+- Source lessons：
+  - [第五周第一课：银行 Agent 评估框架](../week05/lesson01-agent-evaluation-framework.md)
+  - [第五周第二课：Agent 安全与红队测试](../week05/lesson02-agent-security-red-team-testing.md)
+  - [第五周第三课：Agent 上线准入、监控与运营闭环](../week05/lesson03-production-readiness-monitoring-operations.md)
 - Related artifacts：
   - [银行 Agent 场景评估](./01-agent-use-case-assessment.md)
   - [Tool 与 Human-in-the-loop 控制矩阵](./02-tool-and-hitl-control-matrix.md)
   - [银行 Agent 平台逻辑架构](./03-agent-platform-architecture.md)
-- Last updated：2026-09-15
+- Last updated：2026-09-19
 
 ## 1. Evaluation objective
 
@@ -194,4 +197,4 @@ execution_date:
 
 ## 10. Future updates
 
-完成第五周安全与红队测试后，补充攻击分类、严重度、检测率、防御率和问题处置 SLA；PoC 执行后补充实际结果和版本对比。
+第五周评估、安全、上线准入与运营治理学习已经完成。PoC 阶段继续补充可执行攻击用例、严重度、检测率、防御率、问题处置 SLA、Release Gate 演练、实际结果和版本对比。

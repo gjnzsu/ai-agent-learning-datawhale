@@ -1,6 +1,6 @@
 # 第五周 · 第三课：Agent 上线准入、监控与运营闭环
 
-> 状态：待学习  
+> 状态：已完成（2026-09-19；正式准入演练延期至 PoC）
 > 建议时长：90～120 分钟  
 > 面向角色：银行 AI 平台项目经理、产品经理、架构师、开发、测试、SRE、安全、风险与业务运营人员  
 > 本课目标：把离线评估和安全控制转化为可执行的上线决策、生产监控与持续改进机制
@@ -506,16 +506,16 @@ Canary 验证
 
 ## 二十、本课完成标准
 
-- [ ] 能定义一个完整的 Agent Release Bundle。
-- [ ] 能解释分阶段发布路径和每阶段退出条件。
-- [ ] 将六维指标、Hard Gate 和证据转成上线准入清单。
-- [ ] 为 Payment Investigation Agent 设计 Canary。
-- [ ] 定义 Metrics、Logs、Traces 和线上抽样策略。
-- [ ] 设计分级 Kill Switch、降级、回滚与补偿流程。
-- [ ] 建立从反馈到评估集再到发布的运营闭环。
-- [ ] 能主持一次跨职能 Go/No-Go 评审。
+- [x] 能定义一个完整的 Agent Release Bundle。
+- [x] 能解释分阶段发布路径和每阶段退出条件。
+- [x] 将六维指标、Hard Gate 和证据转成上线准入清单。
+- [x] 为 Payment Investigation Agent 设计 Canary。
+- [x] 定义 Metrics、Logs、Traces 和线上抽样策略。
+- [x] 设计分级 Kill Switch、降级、回滚与补偿流程。
+- [x] 建立从反馈到评估集再到发布的运营闭环。
+- [x] 能主持一次跨职能 Go/No-Go 评审。
 
-> 完成本课后，再更新 README、六周计划和 artifacts；在讲义创建阶段保持本课为“待学习”。
+> 理论学习已经完成；正式 Release Gate、Canary、Kill Switch 与回滚演练将在第六周 PoC 阶段执行并留存证据。
 
 ---
 
