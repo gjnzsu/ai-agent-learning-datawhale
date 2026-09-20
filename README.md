@@ -21,6 +21,10 @@
 - [第五周第一课：银行 Agent 评估框架](./week05/lesson01-agent-evaluation-framework.md)
 - [第五周第二课：Agent 安全与红队测试](./week05/lesson02-agent-security-red-team-testing.md)
 - [第五周第三课：Agent 上线准入、监控与运营闭环](./week05/lesson03-production-readiness-monitoring-operations.md)
+- [第六周综合学习计划：KYC/信贷材料初审辅助 Agent PoC](./week06/week06-unified-rag-learning-plan.md)
+- [第六周第一课：PoC 范围、合成 Case 数据与架构](./week06/lesson01-poc-scope-data-architecture.md)
+- [第六周第二课：RAG、材料校验工具与 FastAPI](./week06/lesson02-rag-tools-fastapi.md)
+- [第六周第三课：评估、安全、可观测性与交付](./week06/lesson03-evaluation-security-observability-delivery.md)
 
 ## 核心成果 Artifacts
 
@@ -50,5 +54,8 @@
 - [x] 第五周第一课：银行 Agent 评估框架（2026-09-14 完成；评估集实践延期至 PoC）
 - [x] 第五周第二课：Agent 安全与红队测试（2026-09-18 完成；正式威胁模型与红队执行延期至 PoC）
 - [x] 第五周第三课：Agent 上线准入、监控与运营闭环（2026-09-19 完成；正式准入演练延期至 PoC）
+- [x] 第六周第一课：PoC 范围、合成 Case 数据与架构（2026-09-20 完成）
+- [ ] 第六周第二课：RAG、材料校验工具与 FastAPI
+- [ ] 第六周第三课：评估、安全、可观测性与交付
 
 后续学习讲义、练习记录和 PoC 将持续更新。
