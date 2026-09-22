@@ -4,10 +4,17 @@
 
 学习者背景：Java Engineer、银行 AI 平台项目经理，正在学习 Python 与数据分析。本项目采用面向实际岗位的六周压缩路线，重点关注 Agent 场景判断、平台架构、知识与权限治理、安全评估及受控 PoC。
 
+## 学习路线导航
+
+本仓库同时覆盖 AI 技术学习与银行 AI 平台交付能力发展。两条路线通过平台架构、治理、评估和生产运营知识相互衔接。
+
+- **AI 技术学习**：[六周计划](./bank-ai-platform-pm-6week-plan.md)，课程位于 `week01/` 至 `week06/`，成果位于 `artifacts/`。
+- **平台 PM 能力发展**：[岗位学习导航](./platform-pm/README.md)，包含 90 天路线图、WoW 模板、匿名化实践和每周复盘。
+
 ## 学习资料
 
 - [六周压缩学习计划](./bank-ai-platform-pm-6week-plan.md)
-- [集团 AI 平台 PM：90 天能力发展与 Ways of Working 路线图](./bank-ai-platform-pm-90day-development-roadmap.md)（与技术学习并行，覆盖 backlog、交付透明度及 adoption 实践）
+- [集团 AI 平台 PM：90 天能力发展与 Ways of Working 路线图](./platform-pm/roadmap.md)（与技术学习并行，覆盖 backlog、交付透明度及 adoption 实践）
 - [第一周第一课：初识智能体](./week01/lesson01-agent-fundamentals.md)
 - [第一周第二课：银行 AI 场景筛选与 Agent 适用性判断](./week01/lesson02-bank-ai-scenario-selection.md)
 - [第二周第一课：ReAct 与受控工具调用](./week02/lesson01-react-and-controlled-tools.md)
