@@ -7,6 +7,7 @@
 ## 学习资料
 
 - [六周压缩学习计划](./bank-ai-platform-pm-6week-plan.md)
+- [集团 AI 平台 PM：90 天能力发展与 Ways of Working 路线图](./bank-ai-platform-pm-90day-development-roadmap.md)（与技术学习并行，覆盖 backlog、交付透明度及 adoption 实践）
 - [第一周第一课：初识智能体](./week01/lesson01-agent-fundamentals.md)
 - [第一周第二课：银行 AI 场景筛选与 Agent 适用性判断](./week01/lesson02-bank-ai-scenario-selection.md)
 - [第二周第一课：ReAct 与受控工具调用](./week02/lesson01-react-and-controlled-tools.md)
