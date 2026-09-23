@@ -5,7 +5,7 @@
 ## 课程信息
 
 - 建议时长：3～4 小时，可分两次完成
-- 本课状态：待学习
+- 本课状态：已完成（2026-09-23；评估执行与交付保留为 PoC 实践）
 - 核心产出：评估报告、威胁模型、Trace、Docker 和演示材料
 
 ## 一、学习目标
@@ -260,6 +260,8 @@ PoC 的 Docker 成功不代表具备生产容量、灾备和合规能力。
 
 ## 十六、本课完成标准
 
+以下为 PoC 实践验收项，完成知识学习不代表评估和交付已经实际执行：
+
 - [ ] 建立版本化的最小评估集。
 - [ ] 分别报告检索与生成指标。
 - [ ] 完成关键安全和故障测试。
@@ -268,3 +270,16 @@ PoC 的 Docker 成功不代表具备生产容量、灾备和合规能力。
 - [ ] Docker 可以从干净环境启动。
 - [ ] 完成演示脚本和 Go/No-Go 判断。
 - [ ] 记录 PoC 到 Pilot 的差距与路线图。
+
+## 十七、学习记录
+
+- 能使用 `required_fact`、`forbidden_claim` 和 `hard_failure` 定义评估 Case。
+- 能区分检索、工具、生成和端到端/编排层问题，并按错误层定位修复方向。
+- 理解 Rubric 是评分规则而非固定尺度，可使用二元、三级、五级或分类式评价。
+- 能区分 Hard Gate 与 Threshold Gate，并坚持越权泄露等问题发生一次即 No-Go。
+- 理解直接/间接 Prompt Injection、跨 Case 越权和多层确定性防护。
+- 能使用 Metrics 发现趋势、Logs 查看事件、Traces 还原单次执行链路。
+- 理解 Release Bundle 对模型、Prompt、文档、索引、工具、Policy 和评估集的完整版本锁定。
+- 能区分 Liveness 与 Readiness，以及 Docker 可运行与生产就绪。
+- 能根据质量、安全、性能和 Auditor 修改率判断 Go、Conditional Go 或 No-Go。
+- 理解从离线评估、红队、UAT、Shadow 到 Canary/Pilot 的渐进式准入路径。
