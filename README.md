@@ -33,6 +33,7 @@
 - [第六周第一课：PoC 范围、合成 Case 数据与架构](./week06/lesson01-poc-scope-data-architecture.md)
 - [第六周第二课：RAG、材料校验工具与 FastAPI](./week06/lesson02-rag-tools-fastapi.md)
 - [第六周第三课：评估、安全、可观测性与交付](./week06/lesson03-evaluation-security-observability-delivery.md)
+- [PoC 实践讲义：KYC/信贷材料初审辅助 Agent](./week06/poc-implementation-workbook.md)
 
 ## 核心成果 Artifacts
 
@@ -65,5 +66,6 @@
 - [x] 第六周第一课：PoC 范围、合成 Case 数据与架构（2026-09-20 完成）
 - [x] 第六周第二课：RAG、材料校验工具与 FastAPI（2026-09-22 完成；代码实现与测试保留为 PoC 实践）
 - [x] 第六周第三课：评估、安全、可观测性与交付（2026-09-23 完成；评估执行与交付保留为 PoC 实践）
+- [ ] PoC 实践：完成 M0～M5 的代码、测试、评估、安全、可观测性与容器化交付
 
 六周理论课程已全部完成。下一阶段进入 KYC/信贷材料初审辅助 Agent 的代码实现、测试、评估和交付实践。
