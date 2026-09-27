@@ -9,8 +9,12 @@
 本仓库聚焦 AI Agent 技术学习、代码练习和 PoC。银行 AI 平台 PM 成长计划已迁移至 ai-platform 仓库，两条路线通过平台架构、治理、评估和生产运营知识相互衔接。
 
 - **AI 技术学习**：[六周计划](./bank-ai-platform-pm-6week-plan.md)，课程位于 `week01/` 至 `week06/`，成果位于 `artifacts/`。
-- **六周学习地图**：[中文版 PNG](./artifacts/ai-agent-six-week-learning-map.png) · [English PNG](./artifacts/ai-agent-six-week-learning-map-en.png)。17 节理论课与核心 PoC 实践均已完成；生产化扩展单独列入后续路线。
+- **六周学习地图**：[中文版 PNG](./ai-agent-six-week-learning-map.png) · [English PNG](./ai-agent-six-week-learning-map-en.png)。17 节理论课与核心 PoC 实践均已完成；生产化扩展单独列入后续路线。
 - **平台 PM 能力发展**：[岗位学习导航](https://github.com/gjnzsu/ai-platform/blob/main/platform-pm/README.md)，包含 90 天路线图、WoW 模板、匿名化实践和每周复盘。
+
+### 六周学习路径
+
+![AI Agent 六周学习地图](./ai-agent-six-week-learning-map.png)
 
 ## 学习资料
 
