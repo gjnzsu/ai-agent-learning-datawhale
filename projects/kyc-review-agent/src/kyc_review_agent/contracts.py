@@ -42,3 +42,21 @@ class ReviewResult(BaseModel):
     case_fact_refs: list[str] = Field(default_factory=list)
     limitations: list[str] = Field(default_factory=list)
     requires_auditor_decision: Literal[True] = True
+
+
+class PolicyRule(BaseModel):
+    document_id: str
+    version: str
+    case_type: Literal["corporate_kyc", "credit_material_review"]
+    effective_date: date
+    expiry_date: date | None = None
+    required_documents: list[str] = Field(min_length=1)
+    source_ref: str
+
+
+class PolicyChunk(BaseModel):
+    chunk_id: str
+    document_id: str
+    section: str
+    text: str
+    source_ref: str

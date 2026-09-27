@@ -1,57 +1,96 @@
 from pathlib import Path
 
+from kyc_review_agent.authorization import AuthorizationService
 from kyc_review_agent.case_repository import InMemoryCaseRepository
+from kyc_review_agent.citation_validation import CitationValidator
 from kyc_review_agent.contracts import ReviewResult, ReviewTaskRequest
-from kyc_review_agent.policy import authorize_case_access
+from kyc_review_agent.errors import CitationValidationError
+from kyc_review_agent.generation import (
+    DeterministicReviewDraftGenerator,
+    ReviewDraftGenerator,
+)
+from kyc_review_agent.ingestion import build_policy_retriever
+from kyc_review_agent.kyc_policy_repository import KycPolicyRepository
+from kyc_review_agent.retrieval import InMemoryPolicyRetriever
 from kyc_review_agent.tools import check_required_documents
-
-CORPORATE_KYC_REQUIRED_DOCUMENTS = {
-    "company_registration",
-    "legal_representative_id",
-    "beneficial_owner_declaration",
-    "address_proof",
-}
 
 
 class ReviewRuntime:
-    def __init__(self, repository: InMemoryCaseRepository) -> None:
-        self._repository = repository
+    def __init__(
+        self,
+        case_repository: InMemoryCaseRepository,
+        kyc_policy_repository: KycPolicyRepository,
+        policy_retriever: InMemoryPolicyRetriever,
+        draft_generator: ReviewDraftGenerator | None = None,
+        citation_validator: CitationValidator | None = None,
+    ) -> None:
+        self._case_repository = case_repository
+        self._kyc_policy_repository = kyc_policy_repository
+        self._policy_retriever = policy_retriever
+        self._draft_generator = draft_generator or DeterministicReviewDraftGenerator()
+        self._citation_validator = citation_validator or CitationValidator()
 
     @classmethod
     def default(cls) -> "ReviewRuntime":
         project_root = Path(__file__).resolve().parents[2]
-        repository = InMemoryCaseRepository.from_directory(project_root / "data" / "cases")
-        return cls(repository)
+        case_repository = InMemoryCaseRepository.from_directory(project_root / "data" / "cases")
+        kyc_policy_repository = KycPolicyRepository.from_directory(
+            project_root / "data" / "policies"
+        )
+        policy_retriever = build_policy_retriever(project_root / "data" / "policies")
+        return cls(case_repository, kyc_policy_repository, policy_retriever)
 
     def review(self, request: ReviewTaskRequest, actor_id: str) -> ReviewResult:
-        case = self._repository.get(request.case_id)
-        authorize_case_access(case, actor_id)
+        case = self._case_repository.get(request.case_id)
+        AuthorizationService.authorize_case_access(case, actor_id)
+
+        policy = self._kyc_policy_repository.get_effective(
+            case_type=case.case_type,
+            review_date=case.review_date,
+        )
+        if policy is None:
+            return ReviewResult(
+                case_id=case.case_id,
+                status="manual_review_required",
+                recommendation="No effective policy was found; an auditor must review the case.",
+                case_fact_refs=[f"{case.case_id}.case_type", f"{case.case_id}.review_date"],
+                limitations=[
+                    "Document completeness was not evaluated without an effective policy."
+                ],
+            )
+
+        evidence = self._policy_retriever.retrieve(
+            query=f"{request.review_goal} required documents",
+            allowed_document_ids={policy.document_id},
+            top_k=3,
+        )
+        if not evidence:
+            return ReviewResult(
+                case_id=case.case_id,
+                status="manual_review_required",
+                recommendation=(
+                    "No supporting evidence was retrieved; an auditor must review the case."
+                ),
+                case_fact_refs=[f"{case.case_id}.case_type", f"{case.case_id}.review_date"],
+                limitations=["No policy evidence was available for automated material checking."],
+            )
 
         submitted = {document.document_type for document in case.submitted_documents}
         completeness = check_required_documents(
-            required=CORPORATE_KYC_REQUIRED_DOCUMENTS,
+            required=set(policy.required_documents),
             submitted=submitted,
         )
-
-        if completeness.missing:
+        draft = self._draft_generator.generate(case, completeness, evidence)
+        try:
+            self._citation_validator.validate(draft, case, evidence)
+        except CitationValidationError:
             return ReviewResult(
                 case_id=case.case_id,
-                status="more_information_required",
-                missing_materials=completeness.missing,
+                status="manual_review_required",
                 recommendation=(
-                    "Request the missing materials before continuing human review: "
-                    + ", ".join(completeness.missing)
+                    "The generated draft failed validation; an auditor must review the case."
                 ),
-                citations=["KYC-POLICY-002#corporate-required-documents"],
                 case_fact_refs=[f"{case.case_id}.submitted_documents"],
-                limitations=["Deterministic PoC; no LLM or production system is connected."],
+                limitations=["Citation validation rejected the generated review draft."],
             )
-
-        return ReviewResult(
-            case_id=case.case_id,
-            status="ready_for_review",
-            recommendation="The material set is complete; an auditor must review the evidence.",
-            citations=["KYC-POLICY-002#corporate-required-documents"],
-            case_fact_refs=[f"{case.case_id}.submitted_documents"],
-            limitations=["Deterministic PoC; no LLM or production system is connected."],
-        )
+        return draft

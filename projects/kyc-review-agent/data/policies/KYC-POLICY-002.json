@@ -1,0 +1,14 @@
+{
+  "document_id": "KYC-POLICY-002",
+  "version": "2.0",
+  "case_type": "corporate_kyc",
+  "effective_date": "2026-01-01",
+  "expiry_date": null,
+  "required_documents": [
+    "company_registration",
+    "legal_representative_id",
+    "beneficial_owner_declaration",
+    "address_proof"
+  ],
+  "source_ref": "KYC-POLICY-002#corporate-required-documents"
+}
