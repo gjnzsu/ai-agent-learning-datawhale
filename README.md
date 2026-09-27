@@ -1,5 +1,7 @@
 # AI Agent Learning — Datawhale Hello-Agents
 
+[简体中文](./README.md) | [English](./README.en.md)
+
 基于 Datawhale [Hello-Agents](https://github.com/datawhalechina/hello-agents) 教程整理的个人学习项目。
 
 学习者背景：Java Engineer、银行 AI 平台项目经理，正在学习 Python 与数据分析。本项目采用面向实际岗位的六周压缩路线，重点关注 Agent 场景判断、平台架构、知识与权限治理、安全评估及受控 PoC。
