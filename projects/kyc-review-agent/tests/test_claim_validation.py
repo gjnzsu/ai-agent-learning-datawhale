@@ -38,3 +38,28 @@ def test_validator_allows_human_review_recommendation() -> None:
     )
 
     ProhibitedClaimValidator().validate(result)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Reject the customer.",
+        "The application should be declined.",
+        "This customer presents unacceptable risk.",
+        "建议拒绝该客户。",
+    ],
+)
+def test_validator_rejects_broader_decision_language_in_all_generated_text(
+    text: str,
+) -> None:
+    result = ReviewResult(
+        case_id="SYN-KYC-301",
+        status="manual_review_required",
+        recommendation="An auditor must review the case.",
+        citations=["KYC-POLICY-002#required-documents"],
+        case_fact_refs=["SYN-KYC-301.submitted_documents"],
+        limitations=[text],
+    )
+
+    with pytest.raises(ProhibitedClaimValidationError):
+        ProhibitedClaimValidator().validate(result)

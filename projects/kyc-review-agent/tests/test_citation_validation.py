@@ -56,8 +56,11 @@ def test_validator_rejects_citation_not_returned_by_retriever() -> None:
         case_fact_refs=["SYN-KYC-201.submitted_documents"],
     )
 
-    with pytest.raises(CitationValidationError, match="not retrieved"):
+    with pytest.raises(CitationValidationError, match="not retrieved") as error:
         CitationValidator().validate(result, _case(), _evidence())
+
+    assert error.value.reason == "citation_not_retrieved"
+    assert error.value.invalid_reference_count == 1
 
 
 def test_validator_rejects_fact_reference_for_another_case() -> None:
@@ -69,5 +72,7 @@ def test_validator_rejects_fact_reference_for_another_case() -> None:
         case_fact_refs=["SYN-KYC-999.submitted_documents"],
     )
 
-    with pytest.raises(CitationValidationError, match="case fact"):
+    with pytest.raises(CitationValidationError, match="case fact") as error:
         CitationValidator().validate(result, _case(), _evidence())
+
+    assert error.value.reason == "cross_case_fact_reference"

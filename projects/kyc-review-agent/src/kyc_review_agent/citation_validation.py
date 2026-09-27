@@ -14,12 +14,20 @@ class CitationValidator:
         invalid_citations = set(result.citations) - retrieved_refs
         if invalid_citations:
             raise CitationValidationError(
-                f"Citations were not retrieved: {sorted(invalid_citations)}"
+                "One or more citations were not retrieved.",
+                reason="citation_not_retrieved",
+                invalid_reference_count=len(invalid_citations),
             )
 
         if not result.citations:
-            raise CitationValidationError("The generated result has no retrieved citations.")
+            raise CitationValidationError(
+                "The generated result has no retrieved citations.",
+                reason="missing_citations",
+            )
 
         expected_prefix = f"{case.case_id}."
         if any(not reference.startswith(expected_prefix) for reference in result.case_fact_refs):
-            raise CitationValidationError("A case fact reference belongs to another case.")
+            raise CitationValidationError(
+                "A case fact reference belongs to another case.",
+                reason="cross_case_fact_reference",
+            )

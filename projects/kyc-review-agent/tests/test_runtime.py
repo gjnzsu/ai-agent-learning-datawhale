@@ -1,3 +1,4 @@
+import logging
 from datetime import date
 
 import pytest
@@ -10,7 +11,7 @@ from kyc_review_agent.contracts import (
     ReviewResult,
     ReviewTaskRequest,
 )
-from kyc_review_agent.errors import CaseAccessDeniedError
+from kyc_review_agent.errors import CaseAccessDeniedError, DraftGenerationError
 from kyc_review_agent.kyc_policy_repository import KycPolicyRepository
 from kyc_review_agent.retrieval import InMemoryPolicyRetriever, RetrievalResult
 from kyc_review_agent.runtime import ReviewRuntime
@@ -180,7 +181,7 @@ def test_runtime_uses_retrieved_chunk_as_citation() -> None:
         case_type="corporate_kyc",
         effective_date=date(2026, 1, 1),
         required_documents=["address_proof"],
-        source_ref="KYC-POLICY-TEST#structured-rule",
+        source_ref="KYC-POLICY-TEST#required-documents",
     )
     retriever = InMemoryPolicyRetriever(
         [
@@ -246,7 +247,7 @@ def test_runtime_sends_case_to_manual_review_when_no_evidence_is_retrieved() -> 
     assert "evidence" in result.limitations[0].lower()
 
 
-def test_runtime_rejects_draft_with_fabricated_citation() -> None:
+def test_runtime_rejects_and_logs_draft_with_fabricated_citation(caplog) -> None:
     case = CaseData(
         case_id="SYN-KYC-105",
         case_type="corporate_kyc",
@@ -261,7 +262,7 @@ def test_runtime_rejects_draft_with_fabricated_citation() -> None:
         case_type="corporate_kyc",
         effective_date=date(2026, 1, 1),
         required_documents=["address_proof"],
-        source_ref="KYC-POLICY-TEST#structured-rule",
+        source_ref="KYC-POLICY-TEST#required-documents",
     )
     runtime = ReviewRuntime(
         InMemoryCaseRepository([case]),
@@ -270,17 +271,20 @@ def test_runtime_rejects_draft_with_fabricated_citation() -> None:
         draft_generator=_FabricatingDraftGenerator(),
     )
 
-    result = runtime.review(
-        ReviewTaskRequest(
-            case_id="SYN-KYC-105",
-            review_goal="地址证明要求",
-        ),
-        actor_id="auditor_zhang",
-    )
+    with caplog.at_level(logging.WARNING, logger="kyc_review_agent.runtime"):
+        result = runtime.review(
+            ReviewTaskRequest(
+                case_id="SYN-KYC-105",
+                review_goal="地址证明要求",
+            ),
+            actor_id="auditor_zhang",
+        )
 
     assert result.status == "manual_review_required"
-    assert result.citations == []
+    assert result.citations == ["KYC-POLICY-TEST#required-documents"]
     assert "citation validation" in result.limitations[0].lower()
+    assert "reason=citation_not_retrieved" in caplog.text
+    assert "invalid_reference_count=1" in caplog.text
 
 
 def test_runtime_reports_expired_documents_and_field_conflicts() -> None:
@@ -313,7 +317,7 @@ def test_runtime_reports_expired_documents_and_field_conflicts() -> None:
         required_documents=["application_form", "company_registration"],
         document_validity_days={"company_registration": 365},
         consistency_fields=["registration_number"],
-        source_ref="KYC-POLICY-TEST#structured-rule",
+        source_ref="KYC-POLICY-TEST#required-documents",
     )
     runtime = ReviewRuntime(
         InMemoryCaseRepository([case]),
@@ -366,7 +370,7 @@ def test_runtime_rejects_draft_with_prohibited_approval_claim() -> None:
         case_type="corporate_kyc",
         effective_date=date(2026, 1, 1),
         required_documents=["address_proof"],
-        source_ref="KYC-POLICY-TEST#structured-rule",
+        source_ref="KYC-POLICY-TEST#required-documents",
     )
     runtime = ReviewRuntime(
         InMemoryCaseRepository([case]),
@@ -382,3 +386,101 @@ def test_runtime_rejects_draft_with_prohibited_approval_claim() -> None:
 
     assert result.status == "manual_review_required"
     assert "prohibited claim" in result.limitations[0].lower()
+
+
+class _FailingDraftGenerator:
+    def generate(
+        self,
+        case: CaseData,
+        completeness: DocumentCompletenessResult,
+        validity: DocumentValidityResult,
+        consistency: DocumentConsistencyResult,
+        evidence: list[RetrievalResult],
+    ) -> ReviewResult:
+        raise DraftGenerationError(
+            category="output_contract_error",
+            http_status=400,
+            error_code="invalid_json_schema",
+            request_id="req_test_456",
+            validation_stage="review_result",
+            invalid_fields=("status",),
+            validation_types=("literal_error",),
+        )
+
+
+def test_runtime_degrades_and_logs_safe_diagnostics_when_llm_output_is_invalid(
+    caplog,
+) -> None:
+    case = CaseData(
+        case_id="SYN-KYC-108",
+        case_type="corporate_kyc",
+        synthetic=True,
+        assigned_auditor="auditor_zhang",
+        review_date=date(2026, 9, 27),
+        submitted_documents=[],
+    )
+    policy = PolicyRule(
+        document_id="KYC-POLICY-TEST",
+        version="1.0",
+        case_type="corporate_kyc",
+        effective_date=date(2026, 1, 1),
+        required_documents=["address_proof"],
+        source_ref="KYC-POLICY-TEST#required-documents",
+    )
+    runtime = ReviewRuntime(
+        InMemoryCaseRepository([case]),
+        KycPolicyRepository([policy]),
+        _retriever_for("KYC-POLICY-TEST", "KYC-POLICY-TEST#required-documents"),
+        draft_generator=_FailingDraftGenerator(),
+    )
+
+    with caplog.at_level(logging.WARNING, logger="kyc_review_agent.runtime"):
+        result = runtime.review(
+            ReviewTaskRequest(case_id=case.case_id, review_goal="Review documents"),
+            actor_id="auditor_zhang",
+        )
+
+    assert result.status == "manual_review_required"
+    assert "generation failed" in result.limitations[0].lower()
+    assert result.missing_materials == ["address_proof"]
+    assert result.citations == ["KYC-POLICY-TEST#required-documents"]
+    assert "category=output_contract_error" in caplog.text
+    assert "http_status=400" in caplog.text
+    assert "error_code=invalid_json_schema" in caplog.text
+    assert "request_id=req_test_456" in caplog.text
+    assert "validation_stage=review_result" in caplog.text
+    assert "invalid_fields=status" in caplog.text
+    assert "validation_types=literal_error" in caplog.text
+
+
+def test_runtime_requires_evidence_bound_to_structured_policy_source_ref() -> None:
+    case = CaseData(
+        case_id="SYN-KYC-109",
+        case_type="corporate_kyc",
+        synthetic=True,
+        assigned_auditor="auditor_zhang",
+        review_date=date(2026, 9, 27),
+        submitted_documents=[],
+    )
+    policy = PolicyRule(
+        document_id="KYC-POLICY-TEST",
+        version="1.0",
+        case_type="corporate_kyc",
+        effective_date=date(2026, 1, 1),
+        required_documents=["address_proof"],
+        source_ref="KYC-POLICY-TEST#structured-required-documents",
+    )
+    runtime = ReviewRuntime(
+        InMemoryCaseRepository([case]),
+        KycPolicyRepository([policy]),
+        _retriever_for("KYC-POLICY-TEST", "KYC-POLICY-TEST#unrelated-section"),
+    )
+
+    result = runtime.review(
+        ReviewTaskRequest(case_id=case.case_id, review_goal="Review documents"),
+        actor_id="auditor_zhang",
+    )
+
+    assert result.status == "manual_review_required"
+    assert result.citations == []
+    assert "exact policy evidence" in result.limitations[0].lower()

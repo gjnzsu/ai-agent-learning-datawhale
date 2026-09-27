@@ -75,5 +75,15 @@ $env:KYC_LLM_MODEL = "your-model-deployment"
 uv run uvicorn kyc_review_agent.api:app --reload
 ```
 
-模型只把确定性工具结果和已检索证据整理为结构化草稿。模型输出仍须通过引用校验和
-禁止性主张校验，且 `requires_auditor_decision` 始终由应用强制设置为 `true`。
+模型只基于确定性工具结果和已检索证据撰写建议与限制说明。`status`、缺失材料、字段
+冲突、制度引用和 Case 事实引用均由应用确定性生成；模型无权覆盖这些字段。模型文字
+仍须通过禁止性主张校验，完整结果还须通过引用校验，且
+`requires_auditor_decision` 始终由应用强制设置为 `true`。
+
+结构化制度规则的 `source_ref` 必须与本次检索到的制度 Chunk 精确匹配，避免使用“虽被
+检索到但不支持当前规则”的证据。任何模型或校验失败都会降级到人工审查，同时保留已经
+确定的缺失材料、字段冲突、有效期限制和真实制度引用。
+
+模型调用失败时，API 会安全降级到 `manual_review_required`。Uvicorn 日志只记录用于
+排障的 `category`、HTTP 状态码、OpenAI error code 和 request ID，不记录 API Key、
+完整 Prompt 或客户材料。可依据日志区分上游 HTTP 错误、网络错误和输出契约错误。

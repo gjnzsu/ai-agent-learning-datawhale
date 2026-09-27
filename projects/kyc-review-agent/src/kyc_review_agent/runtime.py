@@ -1,23 +1,34 @@
+import logging
 from pathlib import Path
 
 from kyc_review_agent.authorization import AuthorizationService
 from kyc_review_agent.case_repository import InMemoryCaseRepository
 from kyc_review_agent.citation_validation import CitationValidator
 from kyc_review_agent.claim_validation import ProhibitedClaimValidator
-from kyc_review_agent.contracts import ReviewResult, ReviewTaskRequest
-from kyc_review_agent.errors import CitationValidationError, ProhibitedClaimValidationError
+from kyc_review_agent.contracts import CaseData, ReviewResult, ReviewTaskRequest
+from kyc_review_agent.decision import decide_review_status
+from kyc_review_agent.errors import (
+    CitationValidationError,
+    DraftGenerationError,
+    ProhibitedClaimValidationError,
+)
 from kyc_review_agent.generation import (
     ReviewDraftGenerator,
     generator_from_environment,
 )
 from kyc_review_agent.ingestion import build_policy_retriever
 from kyc_review_agent.kyc_policy_repository import KycPolicyRepository
-from kyc_review_agent.retrieval import InMemoryPolicyRetriever
+from kyc_review_agent.retrieval import InMemoryPolicyRetriever, RetrievalResult
 from kyc_review_agent.tools import (
+    DocumentCompletenessResult,
+    DocumentConsistencyResult,
+    DocumentValidityResult,
     check_document_consistency,
     check_document_validity,
     check_required_documents,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ReviewRuntime:
@@ -82,6 +93,21 @@ class ReviewRuntime:
                 limitations=["No policy evidence was available for automated material checking."],
             )
 
+        supporting_evidence = [
+            item for item in evidence if item.chunk.source_ref == policy.source_ref
+        ]
+        if not supporting_evidence:
+            return ReviewResult(
+                case_id=case.case_id,
+                status="manual_review_required",
+                recommendation=(
+                    "The exact evidence bound to the effective policy rule was not retrieved; "
+                    "an auditor must review the case."
+                ),
+                case_fact_refs=[f"{case.case_id}.case_type", f"{case.case_id}.review_date"],
+                limitations=["Exact policy evidence was not available for automated checking."],
+            )
+
         submitted = {document.document_type for document in case.submitted_documents}
         completeness = check_required_documents(
             required=set(policy.required_documents),
@@ -96,36 +122,96 @@ class ReviewRuntime:
             documents=case.submitted_documents,
             fields=policy.consistency_fields,
         )
-        draft = self._draft_generator.generate(
-            case,
-            completeness,
-            validity,
-            consistency,
-            evidence,
-        )
         try:
-            self._citation_validator.validate(draft, case, evidence)
-        except CitationValidationError:
-            return ReviewResult(
-                case_id=case.case_id,
-                status="manual_review_required",
+            draft = self._draft_generator.generate(
+                case,
+                completeness,
+                validity,
+                consistency,
+                supporting_evidence,
+            )
+        except DraftGenerationError as exc:
+            logger.warning(
+                "llm_draft_generation_failed case_id=%s category=%s http_status=%s "
+                "error_code=%s request_id=%s validation_stage=%s invalid_fields=%s "
+                "validation_types=%s",
+                case.case_id,
+                exc.category,
+                exc.http_status,
+                exc.error_code,
+                exc.request_id,
+                exc.validation_stage,
+                ",".join(exc.invalid_fields) or None,
+                ",".join(exc.validation_types) or None,
+            )
+            return _safe_manual_review_result(
+                case=case,
+                completeness=completeness,
+                validity=validity,
+                consistency=consistency,
+                evidence=supporting_evidence,
+                recommendation=(
+                    "Draft generation failed; an auditor must review the deterministic checks."
+                ),
+                limitation="LLM draft generation failed contract validation or API execution.",
+            )
+        try:
+            self._citation_validator.validate(draft, case, supporting_evidence)
+        except CitationValidationError as exc:
+            logger.warning(
+                "citation_validation_failed case_id=%s reason=%s "
+                "invalid_reference_count=%s",
+                case.case_id,
+                exc.reason,
+                exc.invalid_reference_count,
+            )
+            return _safe_manual_review_result(
+                case=case,
+                completeness=completeness,
+                validity=validity,
+                consistency=consistency,
+                evidence=supporting_evidence,
                 recommendation=(
                     "The generated draft failed validation; an auditor must review the case."
                 ),
-                case_fact_refs=[f"{case.case_id}.submitted_documents"],
-                limitations=["Citation validation rejected the generated review draft."],
+                limitation="Citation validation rejected the generated review draft.",
             )
         try:
             self._claim_validator.validate(draft)
         except ProhibitedClaimValidationError:
-            return ReviewResult(
-                case_id=case.case_id,
-                status="manual_review_required",
+            return _safe_manual_review_result(
+                case=case,
+                completeness=completeness,
+                validity=validity,
+                consistency=consistency,
+                evidence=supporting_evidence,
                 recommendation=(
                     "The generated draft contained a prohibited claim; an auditor must review "
                     "the case."
                 ),
-                case_fact_refs=[f"{case.case_id}.submitted_documents"],
-                limitations=["Prohibited claim validation rejected the generated review draft."],
+                limitation="Prohibited claim validation rejected the generated review draft.",
             )
         return draft
+
+
+def _safe_manual_review_result(
+    *,
+    case: CaseData,
+    completeness: DocumentCompletenessResult,
+    validity: DocumentValidityResult,
+    consistency: DocumentConsistencyResult,
+    evidence: list[RetrievalResult],
+    recommendation: str,
+    limitation: str,
+) -> ReviewResult:
+    decision = decide_review_status(completeness, validity, consistency)
+    return ReviewResult(
+        case_id=case.case_id,
+        status="manual_review_required",
+        missing_materials=decision.missing_materials,
+        conflicts=decision.conflicts,
+        recommendation=recommendation,
+        citations=list(dict.fromkeys(item.chunk.source_ref for item in evidence)),
+        case_fact_refs=[f"{case.case_id}.submitted_documents"],
+        limitations=decision.limitations + [limitation],
+    )

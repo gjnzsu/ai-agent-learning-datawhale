@@ -1,9 +1,14 @@
 import json
 import os
 from typing import Protocol
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from pydantic import BaseModel, ConfigDict, ValidationError
+
 from kyc_review_agent.contracts import CaseData, ReviewResult
+from kyc_review_agent.decision import decide_review_status
+from kyc_review_agent.errors import DraftGenerationError
 from kyc_review_agent.retrieval import RetrievalResult
 from kyc_review_agent.tools import (
     DocumentCompletenessResult,
@@ -34,35 +39,29 @@ class DeterministicReviewDraftGenerator:
     ) -> ReviewResult:
         citations = list(dict.fromkeys(result.chunk.source_ref for result in evidence))
         fact_refs = [f"{case.case_id}.submitted_documents"]
-        if validity.expired or validity.unknown or consistency.conflicts:
-            limitations: list[str] = []
-            if validity.expired:
-                limitations.append("Expired documents: " + ", ".join(validity.expired))
-            if validity.unknown:
-                limitations.append(
-                    "Document validity could not be determined: " + ", ".join(validity.unknown)
-                )
+        decision = decide_review_status(completeness, validity, consistency)
+        if decision.status == "manual_review_required":
             return ReviewResult(
                 case_id=case.case_id,
-                status="manual_review_required",
-                missing_materials=completeness.missing,
-                conflicts=consistency.conflicts,
+                status=decision.status,
+                missing_materials=decision.missing_materials,
+                conflicts=decision.conflicts,
                 recommendation=(
                     "An auditor must review document validity and cross-document conflicts."
                 ),
                 citations=citations,
                 case_fact_refs=fact_refs,
-                limitations=limitations,
+                limitations=decision.limitations,
             )
 
-        if completeness.missing:
+        if decision.status == "more_information_required":
             return ReviewResult(
                 case_id=case.case_id,
-                status="more_information_required",
-                missing_materials=completeness.missing,
+                status=decision.status,
+                missing_materials=decision.missing_materials,
                 recommendation=(
                     "Request the missing materials before continuing human review: "
-                    + ", ".join(completeness.missing)
+                    + ", ".join(decision.missing_materials)
                 ),
                 citations=citations,
                 case_fact_refs=fact_refs,
@@ -71,7 +70,7 @@ class DeterministicReviewDraftGenerator:
 
         return ReviewResult(
             case_id=case.case_id,
-            status="ready_for_review",
+            status=decision.status,
             recommendation="The material set is complete; an auditor must review the evidence.",
             citations=citations,
             case_fact_refs=fact_refs,
@@ -80,7 +79,14 @@ class DeterministicReviewDraftGenerator:
 
 
 class StructuredChatClient(Protocol):
-    def create_json(self, *, model: str, system: str, payload: dict[str, object]) -> str: ...
+    def create_json(
+        self,
+        *,
+        model: str,
+        system: str,
+        payload: dict[str, object],
+        output_schema: dict[str, object],
+    ) -> str: ...
 
 
 class OpenAICompatibleChatClient:
@@ -89,11 +95,25 @@ class OpenAICompatibleChatClient:
         self._api_key = api_key
         self._timeout_seconds = timeout_seconds
 
-    def create_json(self, *, model: str, system: str, payload: dict[str, object]) -> str:
+    def create_json(
+        self,
+        *,
+        model: str,
+        system: str,
+        payload: dict[str, object],
+        output_schema: dict[str, object],
+    ) -> str:
         body = json.dumps(
             {
                 "model": model,
-                "response_format": {"type": "json_object"},
+                "response_format": {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "kyc_review_draft",
+                        "strict": True,
+                        "schema": output_schema,
+                    },
+                },
                 "messages": [
                     {"role": "system", "content": system},
                     {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
@@ -109,16 +129,42 @@ class OpenAICompatibleChatClient:
             },
             method="POST",
         )
-        with urlopen(request, timeout=self._timeout_seconds) as response:  # noqa: S310
-            response_body = json.loads(response.read().decode("utf-8"))
+        try:
+            with urlopen(request, timeout=self._timeout_seconds) as response:  # noqa: S310
+                response_body = json.loads(response.read().decode("utf-8"))
+        except HTTPError as exc:
+            error_code = None
+            try:
+                error_payload = json.loads(exc.read().decode("utf-8"))
+                error_code = error_payload.get("error", {}).get("code")
+            except (AttributeError, json.JSONDecodeError, UnicodeDecodeError):
+                pass
+            raise DraftGenerationError(
+                category="upstream_http_error",
+                http_status=exc.code,
+                error_code=error_code,
+                request_id=exc.headers.get("x-request-id"),
+            ) from exc
+        except URLError as exc:
+            raise DraftGenerationError(category="upstream_transport_error") from exc
         return response_body["choices"][0]["message"]["content"]
+
+
+class _LLMReviewDraft(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    recommendation: str
+    limitations: list[str]
 
 
 class OpenAICompatibleReviewDraftGenerator:
     _system_prompt = (
-        "Create a grounded KYC review draft as JSON. Use only supplied facts and evidence. "
-        "Never approve, reject, or assign customer risk. Preserve supplied citations and case "
-        "fact references. The auditor always makes the final decision."
+        "Write recommendation and limitation text for a grounded KYC review draft as JSON. "
+        "Use only supplied facts and evidence. Do not decide status, missing materials, or "
+        "conflicts; the application supplies those deterministic fields. "
+        "Never approve, reject, or assign customer risk. Do not generate citation identifiers "
+        "or case fact references; the application supplies them. The auditor always makes the "
+        "final decision."
     )
 
     def __init__(self, client: StructuredChatClient, model: str) -> None:
@@ -133,26 +179,68 @@ class OpenAICompatibleReviewDraftGenerator:
         consistency: DocumentConsistencyResult,
         evidence: list[RetrievalResult],
     ) -> ReviewResult:
-        raw = self._client.create_json(
-            model=self._model,
-            system=self._system_prompt,
-            payload={
-                "case_id": case.case_id,
-                "checks": {
-                    "completeness": completeness.model_dump(mode="json"),
-                    "validity": validity.model_dump(mode="json"),
-                    "consistency": consistency.model_dump(mode="json"),
+        try:
+            raw = self._client.create_json(
+                model=self._model,
+                system=self._system_prompt,
+                payload={
+                    "case_id": case.case_id,
+                    "checks": {
+                        "completeness": completeness.model_dump(mode="json"),
+                        "validity": validity.model_dump(mode="json"),
+                        "consistency": consistency.model_dump(mode="json"),
+                    },
+                    "evidence": [
+                        {"text": item.chunk.text, "source_ref": item.chunk.source_ref}
+                        for item in evidence
+                    ],
                 },
-                "evidence": [
-                    {"text": item.chunk.text, "source_ref": item.chunk.source_ref}
-                    for item in evidence
-                ],
-            },
+                output_schema=_LLMReviewDraft.model_json_schema(),
+            )
+            try:
+                draft = _LLMReviewDraft.model_validate_json(raw)
+            except ValidationError as exc:
+                raise _contract_error("llm_draft", exc) from exc
+            try:
+                decision = decide_review_status(completeness, validity, consistency)
+                return ReviewResult(
+                    case_id=case.case_id,
+                    status=decision.status,
+                    missing_materials=decision.missing_materials,
+                    conflicts=decision.conflicts,
+                    requires_auditor_decision=True,
+                    citations=list(
+                        dict.fromkeys(item.chunk.source_ref for item in evidence)
+                    ),
+                    case_fact_refs=[f"{case.case_id}.submitted_documents"],
+                    recommendation=draft.recommendation,
+                    limitations=decision.limitations + draft.limitations,
+                )
+            except ValidationError as exc:
+                raise _contract_error("review_result", exc) from exc
+        except DraftGenerationError:
+            raise
+        except Exception as exc:
+            raise DraftGenerationError(category="output_contract_error") from exc
+
+
+def _contract_error(stage: str, error: ValidationError) -> DraftGenerationError:
+    details = error.errors(include_url=False, include_context=False, include_input=False)
+    fields = tuple(
+        sorted(
+            {
+                str(detail["loc"][0]) if detail["loc"] else "<root>"
+                for detail in details
+            }
         )
-        content = json.loads(raw)
-        content["case_id"] = case.case_id
-        content["requires_auditor_decision"] = True
-        return ReviewResult.model_validate(content)
+    )
+    validation_types = tuple(sorted({str(detail["type"]) for detail in details}))
+    return DraftGenerationError(
+        category="output_contract_error",
+        validation_stage=stage,
+        invalid_fields=fields,
+        validation_types=validation_types,
+    )
 
 
 def generator_from_environment() -> ReviewDraftGenerator:
