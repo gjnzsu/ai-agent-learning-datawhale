@@ -2,7 +2,7 @@
 
 ## 文档信息
 
-- Status：Draft v0.2
+- Status：Course-complete baseline v0.3
 - Owner：AI Platform Product / Delivery
 - Purpose：定义 Agent 工具的权限、副作用、人工审批、失败处理和审计要求
 - Decision stage：Tool onboarding / PoC design / Risk review
@@ -11,7 +11,7 @@
   - [第二周第三课：Human-in-the-loop 与执行治理](../week02/lesson03-human-in-the-loop-execution-governance.md)
   - [第四周第三课：MCP、A2A、ANP 与身份传递](../week04/lesson03-protocols-and-identity-propagation.md)
 - Week 5 evaluation update：已补充工具行为指标、Hard Gate 和评估方式
-- Last updated：2026-09-15
+- Last updated：2026-09-27
 
 ## 1. Purpose
 
@@ -282,7 +282,7 @@ Hard Gate 应优先由 Rule、Policy、Schema 和 Workflow 断言执行。Human 
 
 ## 13. Future updates
 
-PoC 阶段补充：
+核心 PoC 已落地只读 Case/制度访问、确定性校验、模型超时、引用验证和安全降级。Pilot 阶段继续补充：
 
 - 以真实 Tool Schema 建立可执行断言；
 - Prompt Injection、恶意工具输出和越权测试样本；

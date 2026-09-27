@@ -2,7 +2,7 @@
 
 ## 文档信息
 
-- Status：Draft v0.2
+- Status：Course-complete baseline v0.3
 - Owner：AI Platform Product / Delivery
 - Purpose：判断候选需求应采用 Rule、Workflow、LLM Application、Agent 或组合方案
 - Decision stage：Discovery / PoC intake
@@ -11,7 +11,7 @@
   - [第一周第二课：银行 AI 场景筛选与 Agent 适用性判断](../week01/lesson02-bank-ai-scenario-selection.md)
   - [第二周第三课：Human-in-the-loop 与执行治理](../week02/lesson03-human-in-the-loop-execution-governance.md)
 - Week 5 evaluation update：已补充六维指标、Hard Gate 和 PoC 准入逻辑
-- Last updated：2026-09-15
+- Last updated：2026-09-27
 
 ## 1. Purpose
 
@@ -228,7 +228,7 @@
 
 ## 11. Future updates
 
-PoC 阶段补充：
+核心 PoC 已完成 3 条检索评估 Case、5 个固定演示 Case 和 50 项自动化测试。Pilot 阶段继续补充：
 
 - 10 条最小可执行评估样本并扩展到 30～50 条；
 - 固定 Agent、Model、Prompt、RAG、Tool 和 Policy 版本；

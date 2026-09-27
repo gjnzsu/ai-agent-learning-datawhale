@@ -1,5 +1,11 @@
 # KYC Review Agent PoC
 
+> 课程状态：核心 PoC 已完成（2026-09-27）
+>
+> 验证结果：50 项自动化测试通过；3 条检索评估 Case 的 Precision@1、Recall@1 均为 1.0；5 个演示 Case 全部通过
+>
+> 边界：结果基于小规模合成数据，不构成 Pilot 或生产准入结论
+
 由 RAG 支撑的 KYC/信贷材料初审辅助 Agent。当前实现包括 JSON 合成 Case、权限检查、
 材料完整性与有效期检查、跨文档字段一致性检查、制度检索、结构化草稿生成、结果校验、
 Runtime 以及 FastAPI 接口。
@@ -132,3 +138,11 @@ uv run python scripts/run-demo-cases.py --live-llm
 
 报告中的 `passed` 和 `pass_rate` 根据预期业务结果计算。故障注入只存在于演示运行器，
 不会暴露为 FastAPI 端点，也不会影响正常 Runtime。
+
+## PoC 到 Pilot 的待办
+
+- 扩展检索、生成、安全和边界评估集，并形成正式六维 Scorecard；
+- 增加端到端 Trace、Release Bundle、延迟、Token、成本与人工接管指标；
+- 完成正式威胁模型、红队执行和安全 Hard Gate；
+- 增加 Docker、干净环境 Smoke Test、回滚和 Kill Switch；
+- 由业务、风险和技术共同完成 Go / Conditional Go / No-Go 准入评审。

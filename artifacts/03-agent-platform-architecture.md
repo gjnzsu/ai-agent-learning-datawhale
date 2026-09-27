@@ -2,7 +2,7 @@
 
 ## 文档信息
 
-- Status：Draft v0.2
+- Status：Course-complete baseline v0.3
 - Owner：AI Platform Product / Delivery
 - Purpose：定义银行 Agent 平台的逻辑分层、组件职责、请求路径和治理边界
 - Decision stage：Architecture discovery / PoC design
@@ -14,7 +14,7 @@
   - [第四周第二课：记忆、上下文与跨会话隔离](../week04/lesson02-memory-context-isolation.md)
   - [第四周第三课：MCP、A2A、ANP 与身份传递](../week04/lesson03-protocols-and-identity-propagation.md)
 - Week 5 evaluation update：已补充 Evaluation Service、回归与 Release Gate
-- Last updated：2026-09-15
+- Last updated：2026-09-27
 
 ## 1. Purpose
 
@@ -432,11 +432,11 @@ Operational readiness
 
 ## 14. Future updates
 
-完成第五周安全与红队测试后补充：
+核心 PoC 已验证 Runtime、Repository、Retriever、受控生成、Validator 与 API 的最小链路。Pilot 阶段继续补充：
 
 - Prompt Injection、工具投毒、数据泄漏和审批绕过的测试模型；
 - Red-team findings、严重度和处置流程；
 - 安全测试与 Release Gate 的责任人；
 - 线上漂移、告警、回退和紧急停用阈值。
 
-PoC 阶段再补充可执行评估集、首次运行结果和真实回归报告。
+PoC 已补充最小可执行检索评估与演示结果；Pilot 阶段再补充大样本回归、完整 Trace 和正式准入报告。
