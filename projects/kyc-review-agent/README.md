@@ -1,8 +1,8 @@
 # KYC Review Agent PoC
 
-由 RAG 支撑的 KYC/信贷材料初审辅助 Agent。当前阶段先实现不依赖真实 LLM
-和生产系统的确定性基础，包括 JSON 合成 Case、权限检查、材料完整性检查、Runtime
-以及 FastAPI 接口。
+由 RAG 支撑的 KYC/信贷材料初审辅助 Agent。当前实现包括 JSON 合成 Case、权限检查、
+材料完整性与有效期检查、跨文档字段一致性检查、制度检索、结构化草稿生成、结果校验、
+Runtime 以及 FastAPI 接口。
 
 ## 本地运行
 
@@ -28,7 +28,9 @@ data/cases/*.json → CaseData → InMemoryCaseRepository
 data/policies/*.json → PolicyRule → KycPolicyRepository
 → 按 Case 类型与审查日期选择生效制度
 → Case 归属权限检查
-→ 材料完整性工具
+→ 材料完整性、有效期与跨文档一致性工具
+→ 确定性或 OpenAI-compatible 草稿生成器
+→ 引用与禁止性主张校验
 → ReviewResult
 → FastAPI
 ```
@@ -59,3 +61,19 @@ Embedding 与向量索引。
 - 正常审查结果不能缺少制度引用。
 
 验证失败的草稿不会直接返回，而会安全降级为 `manual_review_required`。
+
+## 可选 LLM 草稿生成器
+
+默认配置不访问外部模型，仍使用确定性模板。若要连接兼容 OpenAI Chat Completions
+协议且支持 JSON mode 的模型网关，可在启动服务前设置：
+
+```powershell
+$env:KYC_DRAFT_GENERATOR = "openai_compatible"
+$env:KYC_LLM_BASE_URL = "https://your-model-gateway.example/v1"
+$env:KYC_LLM_API_KEY = "replace-with-a-secret"
+$env:KYC_LLM_MODEL = "your-model-deployment"
+uv run uvicorn kyc_review_agent.api:app --reload
+```
+
+模型只把确定性工具结果和已检索证据整理为结构化草稿。模型输出仍须通过引用校验和
+禁止性主张校验，且 `requires_auditor_decision` 始终由应用强制设置为 `true`。

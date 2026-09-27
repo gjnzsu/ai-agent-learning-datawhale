@@ -3,16 +3,21 @@ from pathlib import Path
 from kyc_review_agent.authorization import AuthorizationService
 from kyc_review_agent.case_repository import InMemoryCaseRepository
 from kyc_review_agent.citation_validation import CitationValidator
+from kyc_review_agent.claim_validation import ProhibitedClaimValidator
 from kyc_review_agent.contracts import ReviewResult, ReviewTaskRequest
-from kyc_review_agent.errors import CitationValidationError
+from kyc_review_agent.errors import CitationValidationError, ProhibitedClaimValidationError
 from kyc_review_agent.generation import (
-    DeterministicReviewDraftGenerator,
     ReviewDraftGenerator,
+    generator_from_environment,
 )
 from kyc_review_agent.ingestion import build_policy_retriever
 from kyc_review_agent.kyc_policy_repository import KycPolicyRepository
 from kyc_review_agent.retrieval import InMemoryPolicyRetriever
-from kyc_review_agent.tools import check_required_documents
+from kyc_review_agent.tools import (
+    check_document_consistency,
+    check_document_validity,
+    check_required_documents,
+)
 
 
 class ReviewRuntime:
@@ -23,12 +28,14 @@ class ReviewRuntime:
         policy_retriever: InMemoryPolicyRetriever,
         draft_generator: ReviewDraftGenerator | None = None,
         citation_validator: CitationValidator | None = None,
+        claim_validator: ProhibitedClaimValidator | None = None,
     ) -> None:
         self._case_repository = case_repository
         self._kyc_policy_repository = kyc_policy_repository
         self._policy_retriever = policy_retriever
-        self._draft_generator = draft_generator or DeterministicReviewDraftGenerator()
+        self._draft_generator = draft_generator or generator_from_environment()
         self._citation_validator = citation_validator or CitationValidator()
+        self._claim_validator = claim_validator or ProhibitedClaimValidator()
 
     @classmethod
     def default(cls) -> "ReviewRuntime":
@@ -80,7 +87,22 @@ class ReviewRuntime:
             required=set(policy.required_documents),
             submitted=submitted,
         )
-        draft = self._draft_generator.generate(case, completeness, evidence)
+        validity = check_document_validity(
+            documents=case.submitted_documents,
+            review_date=case.review_date,
+            validity_days=policy.document_validity_days,
+        )
+        consistency = check_document_consistency(
+            documents=case.submitted_documents,
+            fields=policy.consistency_fields,
+        )
+        draft = self._draft_generator.generate(
+            case,
+            completeness,
+            validity,
+            consistency,
+            evidence,
+        )
         try:
             self._citation_validator.validate(draft, case, evidence)
         except CitationValidationError:
@@ -92,5 +114,18 @@ class ReviewRuntime:
                 ),
                 case_fact_refs=[f"{case.case_id}.submitted_documents"],
                 limitations=["Citation validation rejected the generated review draft."],
+            )
+        try:
+            self._claim_validator.validate(draft)
+        except ProhibitedClaimValidationError:
+            return ReviewResult(
+                case_id=case.case_id,
+                status="manual_review_required",
+                recommendation=(
+                    "The generated draft contained a prohibited claim; an auditor must review "
+                    "the case."
+                ),
+                case_fact_refs=[f"{case.case_id}.submitted_documents"],
+                limitations=["Prohibited claim validation rejected the generated review draft."],
             )
         return draft

@@ -8,3 +8,7 @@ class CaseNotFoundError(Exception):
 
 class CitationValidationError(Exception):
     """Raised when a generated review result is not grounded in retrieved evidence."""
+
+
+class ProhibitedClaimValidationError(Exception):
+    """Raised when a draft attempts an approval or unsupported risk decision."""

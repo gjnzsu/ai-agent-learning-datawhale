@@ -37,3 +37,13 @@ def test_review_endpoint_rejects_cross_case_access() -> None:
     )
 
     assert response.status_code == 403
+
+
+def test_openapi_uses_a_real_synthetic_case_in_request_example() -> None:
+    schema = client.get("/openapi.json").json()
+    example = schema["components"]["schemas"]["ReviewTaskRequest"]["examples"][0]
+
+    assert example == {
+        "case_id": "SYN-KYC-001",
+        "review_goal": "Check document completeness and validity",
+    }

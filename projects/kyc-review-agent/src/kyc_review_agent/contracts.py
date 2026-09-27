@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 CaseId = Annotated[str, Field(pattern=r"^SYN-(KYC|CR)-\d+$")]
 
@@ -23,6 +23,17 @@ class CaseData(BaseModel):
 
 
 class ReviewTaskRequest(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "case_id": "SYN-KYC-001",
+                    "review_goal": "Check document completeness and validity",
+                }
+            ]
+        }
+    )
+
     case_id: CaseId
     review_goal: str = Field(min_length=1, max_length=500)
 
@@ -51,6 +62,8 @@ class PolicyRule(BaseModel):
     effective_date: date
     expiry_date: date | None = None
     required_documents: list[str] = Field(min_length=1)
+    document_validity_days: dict[str, int] = Field(default_factory=dict)
+    consistency_fields: list[str] = Field(default_factory=list)
     source_ref: str
 
 

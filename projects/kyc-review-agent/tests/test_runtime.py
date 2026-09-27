@@ -14,7 +14,11 @@ from kyc_review_agent.errors import CaseAccessDeniedError
 from kyc_review_agent.kyc_policy_repository import KycPolicyRepository
 from kyc_review_agent.retrieval import InMemoryPolicyRetriever, RetrievalResult
 from kyc_review_agent.runtime import ReviewRuntime
-from kyc_review_agent.tools import DocumentCompletenessResult
+from kyc_review_agent.tools import (
+    DocumentCompletenessResult,
+    DocumentConsistencyResult,
+    DocumentValidityResult,
+)
 
 
 def _retriever_for(document_id: str, source_ref: str) -> InMemoryPolicyRetriever:
@@ -36,6 +40,8 @@ class _FabricatingDraftGenerator:
         self,
         case: CaseData,
         completeness: DocumentCompletenessResult,
+        validity: DocumentValidityResult,
+        consistency: DocumentConsistencyResult,
         evidence: list[RetrievalResult],
     ) -> ReviewResult:
         return ReviewResult(
@@ -275,3 +281,104 @@ def test_runtime_rejects_draft_with_fabricated_citation() -> None:
     assert result.status == "manual_review_required"
     assert result.citations == []
     assert "citation validation" in result.limitations[0].lower()
+
+
+def test_runtime_reports_expired_documents_and_field_conflicts() -> None:
+    case = CaseData(
+        case_id="SYN-KYC-106",
+        case_type="corporate_kyc",
+        synthetic=True,
+        assigned_auditor="auditor_zhang",
+        review_date=date(2026, 9, 27),
+        submitted_documents=[
+            {
+                "document_id": "DOC-FORM",
+                "document_type": "application_form",
+                "issued_date": "2026-09-01",
+                "extracted_fields": {"registration_number": "REG-001"},
+            },
+            {
+                "document_id": "DOC-REG",
+                "document_type": "company_registration",
+                "issued_date": "2020-01-01",
+                "extracted_fields": {"registration_number": "REG-002"},
+            },
+        ],
+    )
+    policy = PolicyRule(
+        document_id="KYC-POLICY-TEST",
+        version="1.0",
+        case_type="corporate_kyc",
+        effective_date=date(2026, 1, 1),
+        required_documents=["application_form", "company_registration"],
+        document_validity_days={"company_registration": 365},
+        consistency_fields=["registration_number"],
+        source_ref="KYC-POLICY-TEST#structured-rule",
+    )
+    runtime = ReviewRuntime(
+        InMemoryCaseRepository([case]),
+        KycPolicyRepository([policy]),
+        _retriever_for("KYC-POLICY-TEST", "KYC-POLICY-TEST#required-documents"),
+    )
+
+    result = runtime.review(
+        ReviewTaskRequest(case_id=case.case_id, review_goal="Review validity and consistency"),
+        actor_id="auditor_zhang",
+    )
+
+    assert result.status == "manual_review_required"
+    assert result.conflicts == [
+        "registration_number differs: DOC-FORM=REG-001, DOC-REG=REG-002"
+    ]
+    assert "company_registration" in result.limitations[0]
+
+
+class _ProhibitedClaimDraftGenerator:
+    def generate(
+        self,
+        case: CaseData,
+        completeness: DocumentCompletenessResult,
+        validity: DocumentValidityResult,
+        consistency: DocumentConsistencyResult,
+        evidence: list[RetrievalResult],
+    ) -> ReviewResult:
+        return ReviewResult(
+            case_id=case.case_id,
+            status="ready_for_review",
+            recommendation="Automatically approve the customer.",
+            citations=[evidence[0].chunk.source_ref],
+            case_fact_refs=[f"{case.case_id}.submitted_documents"],
+        )
+
+
+def test_runtime_rejects_draft_with_prohibited_approval_claim() -> None:
+    case = CaseData(
+        case_id="SYN-KYC-107",
+        case_type="corporate_kyc",
+        synthetic=True,
+        assigned_auditor="auditor_zhang",
+        review_date=date(2026, 9, 27),
+        submitted_documents=[],
+    )
+    policy = PolicyRule(
+        document_id="KYC-POLICY-TEST",
+        version="1.0",
+        case_type="corporate_kyc",
+        effective_date=date(2026, 1, 1),
+        required_documents=["address_proof"],
+        source_ref="KYC-POLICY-TEST#structured-rule",
+    )
+    runtime = ReviewRuntime(
+        InMemoryCaseRepository([case]),
+        KycPolicyRepository([policy]),
+        _retriever_for("KYC-POLICY-TEST", "KYC-POLICY-TEST#required-documents"),
+        draft_generator=_ProhibitedClaimDraftGenerator(),
+    )
+
+    result = runtime.review(
+        ReviewTaskRequest(case_id=case.case_id, review_goal="Review documents"),
+        actor_id="auditor_zhang",
+    )
+
+    assert result.status == "manual_review_required"
+    assert "prohibited claim" in result.limitations[0].lower()

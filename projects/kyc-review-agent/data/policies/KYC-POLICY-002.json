@@ -10,5 +10,11 @@
     "beneficial_owner_declaration",
     "address_proof"
   ],
+  "document_validity_days": {
+    "address_proof": 90
+  },
+  "consistency_fields": [
+    "company_registration_number"
+  ],
   "source_ref": "KYC-POLICY-002#corporate-required-documents"
 }
