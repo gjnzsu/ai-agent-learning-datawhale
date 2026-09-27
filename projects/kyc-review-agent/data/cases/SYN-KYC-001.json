@@ -1,0 +1,24 @@
+{
+  "case_id": "SYN-KYC-001",
+  "case_type": "corporate_kyc",
+  "synthetic": true,
+  "assigned_auditor": "auditor_zhang",
+  "review_date": "2026-09-27",
+  "submitted_documents": [
+    {
+      "document_id": "DOC-001",
+      "document_type": "company_registration",
+      "extracted_fields": {}
+    },
+    {
+      "document_id": "DOC-002",
+      "document_type": "legal_representative_id",
+      "extracted_fields": {}
+    },
+    {
+      "document_id": "DOC-003",
+      "document_type": "beneficial_owner_declaration",
+      "extracted_fields": {}
+    }
+  ]
+}

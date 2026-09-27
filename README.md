@@ -35,6 +35,7 @@
 - [第六周第二课：RAG、材料校验工具与 FastAPI](./week06/lesson02-rag-tools-fastapi.md)
 - [第六周第三课：评估、安全、可观测性与交付](./week06/lesson03-evaluation-security-observability-delivery.md)
 - [PoC 实践讲义：KYC/信贷材料初审辅助 Agent](./week06/poc-implementation-workbook.md)
+- [PoC 实践：KYC/信贷材料初审辅助 Agent](./projects/kyc-review-agent/README.md)
 
 ## 核心成果 Artifacts
 

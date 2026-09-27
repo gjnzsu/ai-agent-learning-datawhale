@@ -1,0 +1,8 @@
+{
+  "case_id": "SYN-KYC-002",
+  "case_type": "corporate_kyc",
+  "synthetic": true,
+  "assigned_auditor": "auditor_li",
+  "review_date": "2026-09-27",
+  "submitted_documents": []
+}
