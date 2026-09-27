@@ -13,8 +13,14 @@
   "document_validity_days": {
     "address_proof": 90
   },
+  "document_validity_source_refs": {
+    "address_proof": "KYC-POLICY-002#document-validity"
+  },
   "consistency_fields": [
     "company_registration_number"
   ],
+  "consistency_source_refs": {
+    "company_registration_number": "KYC-POLICY-002#cross-document-consistency"
+  },
   "source_ref": "KYC-POLICY-002#corporate-required-documents"
 }

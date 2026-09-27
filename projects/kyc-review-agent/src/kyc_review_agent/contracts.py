@@ -63,7 +63,9 @@ class PolicyRule(BaseModel):
     expiry_date: date | None = None
     required_documents: list[str] = Field(min_length=1)
     document_validity_days: dict[str, int] = Field(default_factory=dict)
+    document_validity_source_refs: dict[str, str] = Field(default_factory=dict)
     consistency_fields: list[str] = Field(default_factory=list)
+    consistency_source_refs: dict[str, str] = Field(default_factory=dict)
     source_ref: str
 
 

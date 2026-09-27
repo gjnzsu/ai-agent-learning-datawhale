@@ -77,37 +77,6 @@ class ReviewRuntime:
                 ],
             )
 
-        evidence = self._policy_retriever.retrieve(
-            query=f"{request.review_goal} required documents",
-            allowed_document_ids={policy.document_id},
-            top_k=3,
-        )
-        if not evidence:
-            return ReviewResult(
-                case_id=case.case_id,
-                status="manual_review_required",
-                recommendation=(
-                    "No supporting evidence was retrieved; an auditor must review the case."
-                ),
-                case_fact_refs=[f"{case.case_id}.case_type", f"{case.case_id}.review_date"],
-                limitations=["No policy evidence was available for automated material checking."],
-            )
-
-        supporting_evidence = [
-            item for item in evidence if item.chunk.source_ref == policy.source_ref
-        ]
-        if not supporting_evidence:
-            return ReviewResult(
-                case_id=case.case_id,
-                status="manual_review_required",
-                recommendation=(
-                    "The exact evidence bound to the effective policy rule was not retrieved; "
-                    "an auditor must review the case."
-                ),
-                case_fact_refs=[f"{case.case_id}.case_type", f"{case.case_id}.review_date"],
-                limitations=["Exact policy evidence was not available for automated checking."],
-            )
-
         submitted = {document.document_type for document in case.submitted_documents}
         completeness = check_required_documents(
             required=set(policy.required_documents),
@@ -122,6 +91,34 @@ class ReviewRuntime:
             documents=case.submitted_documents,
             fields=policy.consistency_fields,
         )
+        required_source_refs = {policy.source_ref}
+        for document_type in [*validity.expired, *validity.unknown]:
+            source_ref = policy.document_validity_source_refs.get(document_type)
+            if source_ref:
+                required_source_refs.add(source_ref)
+        if consistency.conflicts:
+            required_source_refs.update(
+                policy.consistency_source_refs[field]
+                for field in policy.consistency_fields
+                if field in policy.consistency_source_refs
+            )
+
+        supporting_evidence = self._policy_retriever.retrieve_by_source_refs(
+            allowed_document_ids={policy.document_id},
+            source_refs=required_source_refs,
+        )
+        retrieved_source_refs = {item.chunk.source_ref for item in supporting_evidence}
+        if retrieved_source_refs != required_source_refs:
+            return ReviewResult(
+                case_id=case.case_id,
+                status="manual_review_required",
+                recommendation=(
+                    "The exact evidence bound to the effective policy rules was not retrieved; "
+                    "an auditor must review the case."
+                ),
+                case_fact_refs=[f"{case.case_id}.case_type", f"{case.case_id}.review_date"],
+                limitations=["Exact policy evidence was not available for automated checking."],
+            )
         try:
             draft = self._draft_generator.generate(
                 case,

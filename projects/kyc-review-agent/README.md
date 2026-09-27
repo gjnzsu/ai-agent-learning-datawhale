@@ -87,3 +87,48 @@ uv run uvicorn kyc_review_agent.api:app --reload
 模型调用失败时，API 会安全降级到 `manual_review_required`。Uvicorn 日志只记录用于
 排障的 `category`、HTTP 状态码、OpenAI error code 和 request ID，不记录 API Key、
 完整 Prompt 或客户材料。可依据日志区分上游 HTTP 错误、网络错误和输出契约错误。
+
+## RAG 离线评估
+
+`data/evaluation/retrieval-cases.json` 保存带标准答案的检索问题。运行以下命令可计算
+逐 Case 及汇总的 `Precision@K`、`Recall@K`：
+
+```powershell
+uv run python scripts/run-retrieval-eval.py --top-k 1
+```
+
+计算方式：
+
+```text
+Precision@K = Top-K 中相关 Chunk 数 / K
+Recall@K = Top-K 中相关 Chunk 数 / 标准答案相关 Chunk 总数
+```
+
+报告同时提供 micro 与 macro 指标。当前评估只运行本地 Retriever，不调用 GPT‑5.5，
+因此不会产生模型费用。增加制度或检索场景时，应同步扩充评估 Case，而不是只针对现有
+三个样例调参。
+
+## 五个 PoC 演示 Case
+
+以下命令以不调用外部模型的确定性模式运行五个可重复演示场景：
+
+```powershell
+uv run python scripts/run-demo-cases.py
+```
+
+覆盖范围：
+
+1. `SYN-KYC-101`：材料完整，可进入人工审查；
+2. `SYN-KYC-102`：缺少地址证明；
+3. `SYN-KYC-103`：地址证明过期；
+4. `SYN-KYC-104`：公司注册号跨文档冲突；
+5. `SYN-KYC-105`：注入可重复的 LLM 失败并验证安全降级。
+
+若已配置 GPT‑5.5，可让前四个场景使用真实模型撰写建议；第五个场景仍使用受控故障注入：
+
+```powershell
+uv run python scripts/run-demo-cases.py --live-llm
+```
+
+报告中的 `passed` 和 `pass_rate` 根据预期业务结果计算。故障注入只存在于演示运行器，
+不会暴露为 FastAPI 端点，也不会影响正常 Runtime。

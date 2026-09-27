@@ -1,0 +1,30 @@
+{
+  "case_id": "SYN-KYC-101",
+  "case_type": "corporate_kyc",
+  "synthetic": true,
+  "assigned_auditor": "auditor_demo",
+  "review_date": "2026-09-27",
+  "submitted_documents": [
+    {
+      "document_id": "DEMO-101-REG",
+      "document_type": "company_registration",
+      "extracted_fields": {"company_registration_number": "REG-101"}
+    },
+    {
+      "document_id": "DEMO-101-ID",
+      "document_type": "legal_representative_id",
+      "extracted_fields": {}
+    },
+    {
+      "document_id": "DEMO-101-BO",
+      "document_type": "beneficial_owner_declaration",
+      "extracted_fields": {"company_registration_number": "REG-101"}
+    },
+    {
+      "document_id": "DEMO-101-ADDRESS",
+      "document_type": "address_proof",
+      "issued_date": "2026-09-01",
+      "extracted_fields": {}
+    }
+  ]
+}

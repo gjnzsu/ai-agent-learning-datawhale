@@ -1,0 +1,17 @@
+{
+  "case_id": "SYN-KYC-103",
+  "case_type": "corporate_kyc",
+  "synthetic": true,
+  "assigned_auditor": "auditor_demo",
+  "review_date": "2026-09-27",
+  "submitted_documents": [
+    {"document_id": "DEMO-103-REG", "document_type": "company_registration"},
+    {"document_id": "DEMO-103-ID", "document_type": "legal_representative_id"},
+    {"document_id": "DEMO-103-BO", "document_type": "beneficial_owner_declaration"},
+    {
+      "document_id": "DEMO-103-ADDRESS",
+      "document_type": "address_proof",
+      "issued_date": "2026-01-01"
+    }
+  ]
+}

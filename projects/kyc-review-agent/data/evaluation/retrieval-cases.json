@@ -1,0 +1,26 @@
+[
+  {
+    "case_id": "RET-KYC-001",
+    "query": "企业客户必需材料 地址证明 公司注册证明",
+    "allowed_document_ids": ["KYC-POLICY-002"],
+    "relevant_source_refs": [
+      "KYC-POLICY-002#corporate-required-documents"
+    ]
+  },
+  {
+    "case_id": "RET-KYC-002",
+    "query": "地址证明有效期 签发日期 90天",
+    "allowed_document_ids": ["KYC-POLICY-002"],
+    "relevant_source_refs": [
+      "KYC-POLICY-002#document-validity"
+    ]
+  },
+  {
+    "case_id": "RET-KYC-003",
+    "query": "不同材料 公司注册号 一致 冲突",
+    "allowed_document_ids": ["KYC-POLICY-002"],
+    "relevant_source_refs": [
+      "KYC-POLICY-002#cross-document-consistency"
+    ]
+  }
+]

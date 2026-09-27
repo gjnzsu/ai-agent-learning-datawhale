@@ -42,6 +42,18 @@ class InMemoryPolicyRetriever:
         results.sort(key=lambda result: (-result.score, result.chunk.chunk_id))
         return results[:top_k]
 
+    def retrieve_by_source_refs(
+        self,
+        allowed_document_ids: set[str],
+        source_refs: set[str],
+    ) -> list[RetrievalResult]:
+        results = [
+            RetrievalResult(chunk=chunk, score=1.0)
+            for chunk in self._chunks
+            if chunk.document_id in allowed_document_ids and chunk.source_ref in source_refs
+        ]
+        return sorted(results, key=lambda result: result.chunk.chunk_id)
+
 
 def _terms(value: str) -> set[str]:
     normalized = value.lower()

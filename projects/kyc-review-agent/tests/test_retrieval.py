@@ -54,3 +54,38 @@ def test_retriever_never_returns_chunk_outside_allowed_documents() -> None:
     )
 
     assert results == []
+
+
+def test_exact_evidence_lookup_returns_only_requested_source_refs() -> None:
+    retriever = InMemoryPolicyRetriever(
+        [
+            PolicyChunk(
+                chunk_id="POLICY-A#required",
+                document_id="POLICY-A",
+                section="Required",
+                text="Required documents",
+                source_ref="POLICY-A#required",
+            ),
+            PolicyChunk(
+                chunk_id="POLICY-A#validity",
+                document_id="POLICY-A",
+                section="Validity",
+                text="Document validity",
+                source_ref="POLICY-A#validity",
+            ),
+            PolicyChunk(
+                chunk_id="POLICY-B#validity",
+                document_id="POLICY-B",
+                section="Validity",
+                text="Other policy validity",
+                source_ref="POLICY-B#validity",
+            ),
+        ]
+    )
+
+    results = retriever.retrieve_by_source_refs(
+        allowed_document_ids={"POLICY-A"},
+        source_refs={"POLICY-A#validity"},
+    )
+
+    assert [result.chunk.source_ref for result in results] == ["POLICY-A#validity"]
